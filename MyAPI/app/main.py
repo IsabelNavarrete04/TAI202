@@ -44,15 +44,61 @@ async def leer_usuarios():
     }
 
 @app.post("/v1/usuarios", tags=['HTTP CRUD'])
-async def agregar_usuarios(usario:dict ):
+async def agregar_usuarios(usuario: dict):
+    
     for usr in usuarios:
-        if usr["id"] == usuarios.get("id"): 
+        if usr["id"] == usuario.get("id"):
             raise HTTPException(
-                status_code= 400,
-                detail= "El id ya existe"
+                status_code=400,
+                detail="El id ya existe"
             )
-    usuarios.append(usuarios)
-    return{
-        "mensaje": "usuario creado",
-        "datos nuevos": usuarios
+    
+    usuarios.append(usuario)
+    
+    return {
+        "mensaje": "Usuario creado",
+        "datos nuevos": usuario
     }
+
+@app.put("/v1/usuarios/{id}", tags=['HTTP CRUD'])
+async def actualizar_usuario(id: int, usuario: dict):
+    for i, usr in enumerate(usuarios):
+        if usr["id"] == id:
+            for j in usuarios:
+                if j["id"] == usuario.get("id") and j["id"] != id:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="El id ya existe"
+                    )
+            usuarios[i] = usuario
+            return {
+                "mensaje": "usuario actualizado",
+                "usuario": usuario
+            }
+
+@app.patch("/v1/usuarios/{id}", tags=['HTTP CRUD'])
+async def modificar_usuario(id: int, datos: dict):
+    for usuario in usuarios:
+        if usuario["id"] == id:
+            if "id" in datos:
+                for i in usuarios:
+                    if i["id"] == datos["id"] and i["id"] != id:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="el id ya existe"
+                        )
+            usuario.update(datos)
+            return {
+                "mensaje": "usuario modificado",
+                "usuario": usuario
+            }
+
+@app.delete("/v1/usuarios/{id}", tags=['HTTP CRUD'])
+async def eliminar_usuario(id: int):
+    for usuario in usuarios:
+        if usuario["id"] == id:
+            usuarios.remove(usuario)
+            return {
+                "mensaje": "Usuario eliminado",
+                "usuario": usuario
+            }
