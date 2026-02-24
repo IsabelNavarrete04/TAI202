@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect
 import requests
 
+
 app = Flask(__name__)
 
 myAPI = "http://localhost:5001/v1/usuarios"
