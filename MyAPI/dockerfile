@@ -19,4 +19,4 @@ EXPOSE 5001
 #comando a ejecutar para levanar el servidor 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5001", "--reload"]
 
-# el punto (.) difce que pase el archivo exactamente igual al contenedor
+# el punto (.) dice que pase el archivo exactamente igual al contenedor
