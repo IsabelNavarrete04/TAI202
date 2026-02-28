@@ -16,9 +16,9 @@ class Libro(BaseModel):
 
 class Prestamo(BaseModel):
     id: int = Field(..., gt=0, description="Identificador del préstamo")
-    libro_id: int = Field(..., description="Identificador del libro a prestar")
-    usuario_nombre: str = Field(..., min_length=2, max_length=50, description="Nombre del usuario")
-    usuario_correo: str = Field(..., description="Correo del usuario")
+    IdLibro: int = Field(..., description="Identificador del libro a prestar")
+    NombreUusario: str = Field(..., min_length=2, max_length=50, description="Nombre del usuario")
+    CorreoUsario: str = Field(..., description="Correo del usuario")
 
 #Registrar un libro
 @app.post("/StayBooks/libros", status_code=status.HTTP_201_CREATED, tags=["Libros"])
@@ -62,18 +62,18 @@ async def registrar_prestamo(prestamo: Prestamo):
 
 #Marcar un libro como devuelto
 @app.put("/StayBooks/prestamos/{prestamo_id}/devolver", status_code=status.HTTP_200_OK, tags=["Préstamos"])
-async def devolver_libro(prestamo_id: int):
-    if prestamo_id <= 0:
+async def devolver_libro(IdPrestamo: int):
+    if IdPrestamo <= 0:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El registro de préstamo no existe")
     return {
-        "mensaje": "Libro del préstamo " + str(prestamo_id) + " devuelto correctamente"
+        "mensaje": "Libro del préstamo " + str(IdPrestamo) + " devuelto correctamente"
     }
 
 #Eliminar el registro de un préstamo
 @app.delete("/StayBooks/prestamos/{prestamo_id}", status_code=status.HTTP_200_OK, tags=["Préstamos"])
-async def eliminar_prestamo(prestamo_id: int):
-    if prestamo_id <= 0:
+async def eliminar_prestamo(IdPrestamo: int):
+    if IdPrestamo <= 0:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El registro de préstamo no existe")
     return {
-        "mensaje": "Préstamo " + str(prestamo_id) + " eliminado correctamente"
+        "mensaje": "Préstamo " + str(IdPrestamo) + " eliminado correctamente"
     }
