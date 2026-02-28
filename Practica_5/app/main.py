@@ -17,8 +17,8 @@ class Libro(BaseModel):
 class Prestamo(BaseModel):
     id: int = Field(..., gt=0, description="Identificador del préstamo")
     IdLibro: int = Field(..., description="Identificador del libro a prestar")
-    NombreUusario: str = Field(..., min_length=2, max_length=50, description="Nombre del usuario")
-    CorreoUsario: str = Field(..., description="Correo del usuario")
+    NombreUsuario: str = Field(..., min_length=2, max_length=50, description="Nombre del usuario")
+    CorreoUsuario: str = Field(..., description="Correo del usuario")
 
 #Registrar un libro
 @app.post("/StayBooks/libros", status_code=status.HTTP_201_CREATED, tags=["Libros"])
@@ -53,7 +53,7 @@ async def buscar_libro(nombre: str):
 #Registrar el préstamo de un libro a un usuario
 @app.post("/StayBooks/prestamos", status_code=status.HTTP_201_CREATED, tags=["Préstamos"])
 async def registrar_prestamo(prestamo: Prestamo):
-    if prestamo.libro_id == 0:
+    if prestamo.IdLibro == 0:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El libro ya está prestado")
     return {
         "mensaje": "Préstamo registrado",
