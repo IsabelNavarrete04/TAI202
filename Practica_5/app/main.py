@@ -4,18 +4,76 @@ from pydantic import BaseModel, Field
 
 app = FastAPI()
 
-class libros (BaseModel):
-    nombre:str = Field(..., min_length=2, max_digits=100)
-    autor:str = Field(..., min_length=2, max_digits=100)
-    anio_publicacion: int = Field(..., gt=1450)
-    status: Literal["disponible", "prestado"] = "disponible"
-    paginas: int = Field(..., gt=1)
+libros = []
 
-class prestamos(BaseModel):
-    IdLibro:int = Field(..., gt=1)
-    NombreUsuario: str = Field(..., min_length=2, max_digits=100)
-    CorreoUsuario: str = Field(..., min_length=8, max_digits=50)
+class Libro(BaseModel):
+    id: int = Field(..., gt=0, description="Identificador del libro")
+    nombre: str = Field(..., min_length=2, max_length=100, description="Nombre del libro")
+    autor: str = Field(..., min_length=2, description="Nombre del autor")
+    anio: int = Field(..., gt=1450, le=2025, description="Año de publicación, entre 1451 y 2026")
+    paginas: int = Field(..., gt=1, description="Número de páginas que sea mayor a 1")
+    estado: Literal["disponible", "prestado"] = Field("disponible", description="Estado del libro")
 
-@app.post("/staybook/libros/", status_code=201)
-def regristrar_libro(libro:libros):
-    nuevoLibro = libro
+class Prestamo(BaseModel):
+    id: int = Field(..., gt=0, description="Identificador del préstamo")
+    libro_id: int = Field(..., description="Identificador del libro a prestar")
+    usuario_nombre: str = Field(..., min_length=2, max_length=50, description="Nombre del usuario")
+    usuario_correo: str = Field(..., description="Correo del usuario")
+
+#Registrar un libro
+@app.post("/StayBooks/libros", status_code=status.HTTP_201_CREATED, tags=["Libros"])
+async def registrar_libro(libro: Libro):
+    if len(libro.nombre) < 2:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El nombre del libro no es válido")
+    
+    libros.append(libro)
+
+    return {
+        "mensaje": "Libro registrado",
+        "libro": libro
+    }
+
+#Listar todos los libros disponibles
+@app.get("/StayBooks/libros", status_code=status.HTTP_200_OK, tags=["Libros"])
+async def listar_libros():
+    return {
+        "mensaje": "Lista de libros disponibles",
+        "libros": libros 
+    }
+
+#Buscar un libro por su nombre
+@app.get("/StayBooks/libros/buscar", status_code=status.HTTP_200_OK, tags=["Libros"])
+async def buscar_libro(nombre: str):
+    if len(nombre) < 2:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El nombre del libro no es válido")
+    return {
+        "mensaje": "Buscando libro con nombre: " + nombre
+    }
+
+#Registrar el préstamo de un libro a un usuario
+@app.post("/StayBooks/prestamos", status_code=status.HTTP_201_CREATED, tags=["Préstamos"])
+async def registrar_prestamo(prestamo: Prestamo):
+    if prestamo.libro_id == 0:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El libro ya está prestado")
+    return {
+        "mensaje": "Préstamo registrado",
+        "prestamo": prestamo
+    }
+
+#Marcar un libro como devuelto
+@app.put("/StayBooks/prestamos/{prestamo_id}/devolver", status_code=status.HTTP_200_OK, tags=["Préstamos"])
+async def devolver_libro(prestamo_id: int):
+    if prestamo_id <= 0:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El registro de préstamo no existe")
+    return {
+        "mensaje": "Libro del préstamo " + str(prestamo_id) + " devuelto correctamente"
+    }
+
+#Eliminar el registro de un préstamo
+@app.delete("/StayBooks/prestamos/{prestamo_id}", status_code=status.HTTP_200_OK, tags=["Préstamos"])
+async def eliminar_prestamo(prestamo_id: int):
+    if prestamo_id <= 0:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El registro de préstamo no existe")
+    return {
+        "mensaje": "Préstamo " + str(prestamo_id) + " eliminado correctamente"
+    }
