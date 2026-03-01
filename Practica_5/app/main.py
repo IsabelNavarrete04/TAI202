@@ -8,7 +8,7 @@ libros = []
 
 class Libro(BaseModel):
     id: int = Field(..., gt=0, description="Identificador del libro")
-    nombre: str = Field(..., min_length=2, max_length=100, description="Nombre del libro")
+    nombre: str = Field(...,  max_length=100, description="Nombre del libro")
     autor: str = Field(..., min_length=2, description="Nombre del autor")
     anio: int = Field(..., gt=1450, le=2025, description="Año de publicación, entre 1451 y 2026")
     paginas: int = Field(..., gt=1, description="Número de páginas que sea mayor a 1")
