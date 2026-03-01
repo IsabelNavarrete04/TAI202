@@ -61,7 +61,7 @@ async def registrar_prestamo(prestamo: Prestamo):
     }
 
 #Marcar un libro como devuelto
-@app.put("/StayBooks/prestamos/{prestamo_id}/devolver", status_code=status.HTTP_200_OK, tags=["Préstamos"])
+@app.put("/StayBooks/prestamos/devolver/{IdPrestamo}", status_code=status.HTTP_200_OK, tags=["Préstamos"])
 async def devolver_libro(IdPrestamo: int):
     if IdPrestamo <= 0:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El registro de préstamo no existe")
@@ -70,7 +70,7 @@ async def devolver_libro(IdPrestamo: int):
     }
 
 #Eliminar el registro de un préstamo
-@app.delete("/StayBooks/prestamos/{prestamo_id}", status_code=status.HTTP_200_OK, tags=["Préstamos"])
+@app.delete("/StayBooks/prestamos/{IdPrestamo}", status_code=status.HTTP_200_OK, tags=["Préstamos"])
 async def eliminar_prestamo(IdPrestamo: int):
     if IdPrestamo <= 0:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="El registro de préstamo no existe")
