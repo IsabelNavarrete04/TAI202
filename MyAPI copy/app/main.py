@@ -19,9 +19,6 @@ class crear_usuario(BaseModel):
     nombre:str = Field(...,min_length=3,max_length=50, example="Isabel")
     edad:int = Field(...,ge=1,le=123, description="Edad valida entre 1 y 123")
 
-#seguridad http basic
-security = HTTPBasic()
-
 #Endpoints
 @app.get("/") #-----> arranque
 async def holamundo():
