@@ -1,7 +1,7 @@
 services: 
   api:
     build: .
-    container_name: server_FastAPI
+    container_name: server_JWT
     ports: 
       - "5001:5001"
     volumes: 

@@ -1,10 +1,17 @@
 #importaciones
-from fastapi import FastAPI, status, HTTPException, Depends 
+from fastapi import FastAPI, status, HTTPException, Depends
 import asyncio
 from typing import Optional
 from pydantic import BaseModel, Field
-from fastapi.security import HTTPBasic, HTTPBasicCredentials #----> seguridad
-import secrets
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
+
+SECRET_KEY = "Isabel_Practica_siete"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+oauth2 = OAuth2PasswordBearer(tokenUrl="token")
 
 #Instancoa del servidor
 app = FastAPI()
@@ -20,19 +27,29 @@ class crear_usuario(BaseModel):
     nombre:str = Field(...,min_length=3,max_length=50, example="Isabel")
     edad:int = Field(...,ge=1,le=123, description="Edad valida entre 1 y 123")
 
-#seguridad http basic
-security = HTTPBasic()
+def crear_token(data: dict):
+    datos = data.copy()
+    expiracion = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    datos.update({"exp": expiracion})
+    token = jwt.encode(datos, SECRET_KEY, algorithm=ALGORITHM)
+    return token
 
-def verificar_peticion(credentials: HTTPBasicCredentials = Depends(security)):
-    usuario_correcto = secrets.compare_digest(credentials.username, "IsabelNavarrete")
-    contrasena_correcta = secrets.compare_digest(credentials.password, "123456")
+def verificar_token(token: str = Depends(oauth2)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        usuario = payload.get("sub")
 
-    if not(usuario_correcto and contrasena_correcta):
+        if usuario is None:
+            raise HTTPException(status_code=401, detail="Token inválido")
+
+        return usuario
+
+    except JWTError:
         raise HTTPException(
-            status_code= status.HTTP_401_UNAUTHORIZED,
-            detail = " Credenciales no válidas"
+            status_code=401,
+            detail="Token inválido o expirado"
         )
-    return credentials.username 
+
 
 #Endpoints
 @app.get("/") #-----> arranque
@@ -83,7 +100,7 @@ async def crear_usuario(usuario:crear_usuario):
     }
 
 @app.put("/v1/usuarios/{id}", tags=['HTTP CRUD'])
-async def actualizar_usuario(id: int, usuario: dict):
+async def actualizar_usuario(id: int, usuario: dict, user: str = Depends(verificar_token)):
     for i, usr in enumerate(usuarios):
         if usr["id"] == id:
             for j in usuarios:
@@ -94,7 +111,7 @@ async def actualizar_usuario(id: int, usuario: dict):
                     )
             usuarios[i] = usuario
             return {
-                "mensaje": "usuario actualizado",
+                "mensaje": f"Usuario actualizado por {user}",
                 "usuario": usuario
             }
 
@@ -115,12 +132,28 @@ async def modificar_usuario(id: int, datos: dict):
                 "usuario": usuario
             }
 
-@app.delete("/v1/usuarios/{id}", tags=['HTTP CRUD'])
-async def eliminar_usuario(id: int, usuarioAuth:str = Depends(verificar_peticion)):
+@app.delete("/v1/usuarios/{id}")
+async def eliminar_usuario(id: int, user: str = Depends(verificar_token)):
     for usuario in usuarios:
         if usuario["id"] == id:
             usuarios.remove(usuario)
             return {
-                "mensaje": f"Usuario eliminado por {usuarioAuth}",
+                "mensaje": f"Usuario eliminado por {user}",
                 "usuario": usuario
             }
+
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+
+    if form_data.username != "IsabelNavarrete" or form_data.password != "123456":
+        raise HTTPException(
+            status_code=401,
+            detail="Credenciales incorrectas"
+        )
+
+    token = crear_token({"sub": form_data.username})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
