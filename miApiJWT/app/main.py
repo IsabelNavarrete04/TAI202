@@ -4,6 +4,7 @@ import asyncio
 from typing import Optional
 from pydantic import BaseModel, Field
 from fastapi.security import HTTPBasic, HTTPBasicCredentials #----> seguridad
+import secrets
 
 #Instancoa del servidor
 app = FastAPI()
@@ -18,6 +19,20 @@ class crear_usuario(BaseModel):
     id:int = Field(...,gt=0, description="Identificador de usuario")
     nombre:str = Field(...,min_length=3,max_length=50, example="Isabel")
     edad:int = Field(...,ge=1,le=123, description="Edad valida entre 1 y 123")
+
+#seguridad http basic
+security = HTTPBasic()
+
+def verificar_peticion(credentials: HTTPBasicCredentials = Depends(security)):
+    usuario_correcto = secrets.compare_digest(credentials.username, "IsabelNavarrete")
+    contrasena_correcta = secrets.compare_digest(credentials.password, "123456")
+
+    if not(usuario_correcto and contrasena_correcta):
+        raise HTTPException(
+            status_code= status.HTTP_401_UNAUTHORIZED,
+            detail = " Credenciales no válidas"
+        )
+    return credentials.username 
 
 #Endpoints
 @app.get("/") #-----> arranque
@@ -101,11 +116,11 @@ async def modificar_usuario(id: int, datos: dict):
             }
 
 @app.delete("/v1/usuarios/{id}", tags=['HTTP CRUD'])
-async def eliminar_usuario(id: int):
+async def eliminar_usuario(id: int, usuarioAuth:str = Depends(verificar_peticion)):
     for usuario in usuarios:
         if usuario["id"] == id:
             usuarios.remove(usuario)
             return {
-                "mensaje": "Usuario eliminado",
+                "mensaje": f"Usuario eliminado por {usuarioAuth}",
                 "usuario": usuario
             }
