@@ -1,7 +1,7 @@
 services: 
   api:
     build: .
-    container_name: server_Biblioteca
+    container_name: Examen2doPracial
     ports: 
       - "5001:5001"
     volumes: 
