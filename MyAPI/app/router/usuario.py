@@ -5,6 +5,7 @@ from app.security.auth import verificar_peticion
 from sqlalchemy.orm import Session 
 from app.data.db import get_db
 from app.data.usuario import usuario as dbUusario 
+from app.security.auth import verificar_peticion
 
 
 router = APIRouter(
@@ -37,44 +38,60 @@ async def crear_usuario(usuarioP:crear_usuario, db:Session = Depends(get_db)):
     }
 
 @router.put("/{id}")
-async def actualizar_usuario(id: int, usuario: dict):
-    for i, usr in enumerate(usuarios):
-        if usr["id"] == id:
-            for j in usuarios:
-                if j["id"] == usuario.get("id") and j["id"] != id:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="El id ya existe"
-                    )
-            usuarios[i] = usuario
-            return {
-                "mensaje": "usuario actualizado",
-                "usuario": usuario
-            }
+async def actualizar_usuario(id: int, usuarioPut: dict, db: Session = Depends(get_db)):
+    actualizarU = db.query(dbUusario).filter(dbUusario.id == id).first()
+    
+    if not actualizarU:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
+    
+    actualizarU.nombre = usuarioPut.get("nombre")
+    actualizarU.edad = usuarioPut.get("edad")
+    db.commit()
+    db.refresh(actualizarU)
+
+    return {
+        "mensaje": "usuario actualizado",
+        "usuario": actualizarU
+    }
 
 @router.patch("/{id}")
-async def modificar_usuario(id: int, datos: dict):
-    for usuario in usuarios:
-        if usuario["id"] == id:
-            if "id" in datos:
-                for i in usuarios:
-                    if i["id"] == datos["id"] and i["id"] != id:
-                        raise HTTPException(
-                            status_code=400,
-                            detail="el id ya existe"
-                        )
-            usuario.update(datos)
-            return {
-                "mensaje": "usuario modificado",
-                "usuario": usuario
-            }
+async def modificar_usuario(id: int, datos: dict, db: Session = Depends(get_db)):
+    modificarU = db.query(dbUusario).filter(dbUusario.id == id).first()
+    if not modificarU:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
+    if "nombre" in datos:
+            modificarU.nombre = datos["nombre"]
+
+    if "edad" in datos:
+            modificarU.edad = datos["edad"]  
+    
+    db.commit()
+    db.refresh(modificarU)
+        
+    return {
+            "mensaje": "usuario modificado",
+            "usuario": modificarU
+        }
 
 @router.delete("/{id}")
-async def eliminar_usuario(id: int, usuarioAuth:str = Depends(verificar_peticion)):
-    for usuario in usuarios:
-        if usuario["id"] == id:
-            usuarios.remove(usuario)
-            return {
-                "mensaje": f"Usuario eliminado por {usuarioAuth}",
-                "usuario": usuario
-            }
+async def eliminar_usuario(id: int, usuarioAuth:str = Depends(verificar_peticion), db: Session = Depends(get_db)):
+    eliminarU = db.query(dbUusario).filter(dbUusario.id == id).first()
+    if not eliminarU:
+        raise HTTPException(
+            status_code=404,
+            detail="Usuario no encontrado"
+        )
+    
+    db.delete(eliminarU)
+    db.commit()
+
+    return {
+        "mensaje": f"Usuario eliminado por {usuarioAuth}",
+        "usuario": eliminarU
+    }
